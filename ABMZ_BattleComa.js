@@ -12,7 +12,7 @@
 
 
 /*:
- * @plugindesc v1.00 バトルコマを表示するようにします。
+ * @plugindesc v2.01 アクターのカットインを表示するようにします。
  * @author ヱビ
  * @target MZ
  *
@@ -78,16 +78,19 @@
  * デフォルトの位置にSlime.pngのコマを表示
  * 
  * ShowEnemyComa 3 Slime 2 0 0 350 100
- * 色相0、原点左上、X350、Y100、サイズ2倍の位置にSlime.pngのコマを表示
+ * 色相0、原点左上、X350、Y100、サイズ2倍の位置に
+ * Slime.pngのコマを表示
  *
  * 名前のところにはスペースが入っていても平気です。（今のところは）
  * 
- * 
+ * （1.00以降、機能停止中。コマの中ではなくピクチャで表示でいいかと思った。）
  * 
  * ============================================================================
  * 更新履歴
  * ============================================================================
  * 
+ * Version 2.00
+ *   画像サイズを75%に変更。エネミーコマ削除
  * 
  * Version 1.00
  *   公開
@@ -117,68 +120,6 @@
  *     ただし、ソースコードのヘッダのライセンス表示は残してください。
  * ・素材だけの再配布も可
  * ・アダルトゲーム、残酷なゲームでの使用も可
- * 
- * @command ShowEnemyComa
- * @text 敵キャラの漫画コマ表示
- * @desc 敵キャラの漫画コマをピクチャで表示します。
- * 
- * @arg picId
- * @text ピクチャ番号
- * @desc 敵キャラのコマを表示するピクチャのＩＤです。
- * @type number
- * @decimals 0
- * @min 1
- * @max 100
- * @default 3
- * 
- * @arg enemyImage
- * @text 敵キャラの画像
- * @desc 敵キャラの画像ファイルです。
- * @type file
- * @dir img/enemies
- * 
- * @arg scale
- * @text 大きさ
- * @desc 敵キャラの大きさを何倍にしますか？
- * @type number
- * @decimals 1
- * @min 0.1
- * @default 1
- * 
- * @arg hue
- * @text 色相
- * @desc 敵キャラの色相です。
- * @type number
- * @decimals 0
- * @min 0
- * @max 360
- * @default 0
- * 
- * 
- * @arg center
- * @text 原点
- * @desc ピクチャの原点を0なら左上、1なら中央にします。
- * @type combo
- * @option 原点
- * @value 1
- * @option 左上
- * @value 0
- * @default 1
- * 
- * @arg x
- * @text X座標
- * @desc X座標の位置です。
- * @type number
- * @decimals 0
- * @default -50
- * 
- * 
- * @arg y
- * @text Y座標
- * @desc Y座標の位置です。
- * @type number
- * @decimals 0
- * @default 287
  * 
  * 
  * 
@@ -237,8 +178,9 @@
 	var ComaY = Number(parameters['ComaY']);
 //	ComaY += 87;
 	var ActorRight = eval(parameters['ActorRight']);
-
-	const comaScale = 75;
+	// Ver 1.1
+	const comaScale = 100;
+	
 
 //=============================================================================
 // PluginManager
@@ -247,18 +189,6 @@
 
     const pluginName = "ABMZ_BattleComa";
 	
-    PluginManager.registerCommand(pluginName, "ShowEnemyComa", args => {
-			const picId = args.picId;
-			const enemyName = args.enemyImage;
-			const scale = Number(args.scale) || 1;
-			const hue = Number(args.hue) || 0;
-			const center = Number(args.center) || 1;
-			const x = args.x === undefined ? -50 : eval(args.x);
-			const y = args.y === undefined ? ComaY : eval(args.y);
-			$gameScreen.showPicture(picId, "ComaBattleEnemyProgramAttack"+enemyName+"Hue"+hue+"Scale"+scale, center, x, y, comaScale,comaScale, 255, 0);
-			const tone = $gameScreen.tone();
-			$gameScreen.tintPicture(picId, tone, 0);
-    });
 	
     PluginManager.registerCommand(pluginName, "ShowActorComa", args => {
 			const picId = args.picId;
@@ -280,7 +210,6 @@
 			var tone = $gameScreen.tone();
 			$gameScreen.tintPicture(picId, tone, 0);
     });
-
 //=============================================================================
 // Game_System
 //=============================================================================
@@ -291,8 +220,8 @@
 		if (command === 'ShowEnemyComa') {
 			var v = $gameVariables._data;
 		//	console.log("showenemycoma : " + args[1]);
-			var picId = Number(args[0]);
-			var enemyName = args[1];
+			var picId = Number(args.picId);
+			var enemyName = args.pictureName;
 			for (var i=2,l=args.length; i<l; i++) {
 				if (isNaN(Number(args[i]))) {
 					enemyName += " " +args[i];
@@ -318,6 +247,34 @@
 			//if (hue != 0) $gameScreen.tintPicture(picId, hue, 1);
 		//	$gameScreen.showPicture(picId, "ComaBattleEnemyProgramAttack"+args[1], 0, -150, ComaY, comaScale,comaScale, 255, 0);
 		}
+		if (command === 'ShowOtherFolderPicture') {
+			var v = $gameVariables._data;
+		//	console.log("showenemycoma : " + args[1]);
+			var picId = Number(args[0]);
+			var enemyName = args[1];
+			for (var i=2,l=args.length; i<l; i++) {
+				if (isNaN(Number(args[i]))) {
+					enemyName += " " +args[i];
+				} else {
+					break;
+				}
+				
+			}
+			
+			var scale = Number(args[i]) || 1;
+			i++;
+			var hue = Number(args[i]) || 0;
+			i++;
+			var center = Number(args[i]) || 1;
+			if (Number(args[i]) === 0) center = 0;
+			i++;
+			var x = args[i] === undefined ? -50 : eval(args[i]);
+			i++;
+			var y = args[i] === undefined ? ComaY : eval(args[i]);
+			$gameScreen.showPicture(picId, "AB_Enemy" + enemyName+"Hue"+hue+"Scale"+scale, center, x, y, comaScale,comaScale, 255, 0);
+			var tone = $gameScreen.tone();
+			$gameScreen.tintPicture(picId, tone, 0);
+		}
 	};
 	
 
@@ -335,33 +292,30 @@ Game_Troop.prototype.setup = function(troopId) {
 //=============================================================================
 // Game_Actor
 //=============================================================================
-/*
-	Game_Actor.prototype.battleStatusWindowRefresh = function() {
-		if (!$gameParty.inBattle()) return;
-		if (!$gameParty.battleMembers().contains(this)) return;
-		BattleManager.refreshStatus();
-	};
-*/
+
 
 	Game_Actor.prototype.setStatusPanel = function(panel) {
 		this._statusPanel = panel;
 	};
 
-/* ルークは、ガードフレア状態でイラストが変わる
+
 Game_Actor.prototype.comaNumberString = function() {
 	var vId = 0;
 	switch (this.name()) {
 	case "ルーク": vId = 72; break;
-	//case "ダイアナ": vId = 73; break;
+	case "ダイアナ": vId = 29; break;
 	//case "エイゼル": vId = 74; break;
 	default: return "";
 	}
 	//if (!$gameSwitches.value(vId)) return "2";
 	if (this.name() == "ルーク" && this.isStateAffected(73)) return "3";
+	// スイッチ29番はダイアナ変装。ONのとき、王国兵士姿になる。
+	if (this.name() == "ダイアナ" && $gameSwitches.value(29)) return "2";
+	
 	return "";
 };
 
-*/
+
 var _Window_ActorCommand_prototype_setup = Window_ActorCommand.prototype.setup;
 
 Window_ActorCommand.prototype.setup = function(actor) {
@@ -386,13 +340,9 @@ Window_ActorCommand.prototype.setup = function(actor) {
 		if (comaName && action) {
 			if (ActorRight) {
 				var picId = DamagePictureNumber;
-				//var x = 370;
-				//var x = 670;
 				var x = 770;
 			} else {
 				var picId = AttackPictureNumber;
-				//var x = -150;
-				//var x = 150;
 				var x = -50;
 			}
 			if (action.isAttack()) {
@@ -408,6 +358,10 @@ Window_ActorCommand.prototype.setup = function(actor) {
 		}
 		_Game_Actor_prototype_performActionStart.call(this, action);
 	};
+
+//=============================================================================
+// Game_Screen
+//=============================================================================
 
 
 	Game_Screen.prototype.hideActorBattleComaCommand = function() {
@@ -453,13 +407,9 @@ Window_ActorCommand.prototype.setup = function(actor) {
 		}
 		if (ActorRight) {
 			var picId = DamagePictureNumber;
-			//var x = 370;
-			//var x = 670;
 			var x = 770;
 		} else {
 			var picId = AttackPictureNumber;
-			//var x = -150;
-			var x = 150;
 			var x = -150;
 		}
 	
@@ -475,27 +425,11 @@ Window_ActorCommand.prototype.setup = function(actor) {
 		}
 		this.showActorBattleComaAction(actor, motion);
 	};
-	Game_Screen.prototype.showEnemyBattleComa = function(enemy, motion) {
-		
-		if (!ActorRight) {
-			var vId = DamagePictureNumber;
-			//var x = 370;
-			var x = 670;
-			var x = 770;
-		} else {
-			var vId = AttackPictureNumber;
-			//var x = -150;
-			var x = 150;
-			var x = -50;
-		}
-//		var scale = enemy.enemy().meta.scale  || "1";
-		var scale = enemy.ABScale || "1";
-		var hue = enemy.battlerHue();
-		$gameScreen.showPicture(vId,"ComaBattleEnemyProgram"+motion+enemy.battlerName()+"Hue"+hue+"Scale"+scale, 1, x, ComaY, comaScale,comaScale, 255, 0);
-			var tone = $gameScreen.tone();
-			$gameScreen.tintPicture(vId, tone, 0);
-		
-	};
+	
+
+//=============================================================================
+// BattleManager
+//=============================================================================
 
 	var _BattleManager_getNextSubject = BattleManager.getNextSubject;
 
@@ -513,66 +447,18 @@ Window_ActorCommand.prototype.setup = function(actor) {
 		
 	};
 
-/*
-var _Game_Battler_prototype_performActionEnd = Game_Battler.prototype.performActionEnd;
-Game_Battler.prototype.performActionEnd = function() {
-		_Game_Battler_prototype_performActionEnd.call(this);
-		$gameScreen.erasePicture(AttackPictureNumber);
-		$gameScreen.erasePicture(DamagePictureNumber);
-};
-*/
 Game_Battler.prototype.performActionEnd = function() {
     this.setActionState('done');
 };
-/*
-	Sprite_Battler.prototype.setupDamagePopup = function() {
-    if (this._battler.isDamagePopupRequested()) {
-        if (this._battler.isSpriteVisible()) {
-            var sprite = new Sprite_Damage();
-                sprite.x   = this._actor ?670:150;
-                sprite.y   = ComaY+80;
-						
-            sprite.setup(this._battler);
-            this._damages.push(sprite);
-            SceneManager._scene._spriteset.addChild(sprite);
-        }
-        this._battler.clearDamagePopup();
-        this._battler.clearResult();
-    }
-	};
-*/
-// ==============================
-// YEP_X_VisualHpGauge.js
-// ==============================
-/*
-var _Window_VisualHPGauge_prototype_updateWindowPosition = Window_VisualHPGauge.prototype.updateWindowPosition;
-Window_VisualHPGauge.prototype.updateWindowPosition = function() {
-		if (BattleManager.isInputting() ) {
-			//_Window_VisualHPGauge_prototype_updateWindowPosition.call(this);
-			return;
-		}
-	  this.x = 0;
-  	this.y = ComaY+40;
-};
-*/
 
-Sprite_Battler.prototype.createVisualHpGaugeWindow = function() {
-		if (!SceneManager._scene._spriteset) return;
-		if (this._createdVisualHpGaugeWindow) return;
-		if (!this._battler) return;
-		if (this.checkVisualATBGauge()) {
-			if (!this._visualATBWindow) return;
-			if (!this.parent.parent.children.contains(this._visualATBWindow)) return;
-		}/*
-		this._createdVisualHpGaugeWindow = true;
-    this._visualHpGauge = new Window_VisualHPGauge();*/
-    this._visualHpGauge.setBattler(this._battler);
-    SceneManager._scene._spriteset.addChild(this._visualHpGauge);
-};
 
 // ==============================
 // YEP_X_VisualHpGauge.jsここまで
 // ==============================
+
+//=============================================================================
+// Game_Actor 
+//=============================================================================
 
 	var _Game_Actor_prototype_performDamage = Game_Actor.prototype.performDamage;
 	Game_Actor.prototype.performDamage = function(action) {
@@ -597,40 +483,6 @@ Sprite_Battler.prototype.createVisualHpGaugeWindow = function() {
 	};
 
 
-//=============================================================================
-// Game_Enemy
-//=============================================================================
-
-/*
-	var _Game_Enemy_prototype_performActionStart
-		 = Game_Enemy.prototype.performActionStart;
-	Game_Enemy.prototype.performActionStart = function(action) {
-		$gameScreen.showEnemyBattleComa(this, "Attack");
-		
-		_Game_Enemy_prototype_performActionStart.call(this, action);
-	};
-	
-	var _Game_Enemy_prototype_performDamage = Game_Enemy.prototype.performDamage;
-	Game_Enemy.prototype.performDamage = function(action) {
-		_Game_Enemy_prototype_performDamage.call(this, action);
-		$gameScreen.showEnemyBattleComa(this, "Attack");
-
-	};
-	
-	var _Game_Enemy_prototype_performMiss = Game_Enemy.prototype.performMiss;
-	Game_Enemy.prototype.performMiss = function(action) {
-		_Game_Enemy_prototype_performMiss.call(this, action);
-		$gameScreen.showEnemyBattleComa(this, "Attack");
-	};
-
-	var _Game_Enemy_prototype_performMagicEvasion = Game_Enemy.prototype.performMagicEvasion;
-	Game_Enemy.prototype.performMagicEvasion = function(action) {
-		_Game_Enemy_prototype_performMagicEvasion.call(this, action);
-		$gameScreen.showEnemyBattleComa(this, "Attack");
-
-
-	};
-*/
 
 //=============================================================================
 // Sprite_Picture
@@ -642,12 +494,15 @@ Sprite_Battler.prototype.createVisualHpGaugeWindow = function() {
 		var picture = this.picture();
 		if (picture) {
 			var pictureName = picture.name();
-			if (this._pictureName !== pictureName && (pictureName.match(/ComaBattleEnemyProgramAttack(.+)/)|| pictureName.match(/ComaBattleActorProgramAttack(.+)/))) {
+			if (this._pictureName !== pictureName && 
+				(pictureName.match(/ComaBattleEnemyProgramAttack(.+)/)||
+				 pictureName.match(/ComaBattleActorProgramAttack(.+)/)||
+				 pictureName.match(/AB_Enemy(.+)/))) {
 				this._pictureName = pictureName;
 				//var sprite = PIXI.Sprite.fromImage('../../img/pictures/'+RegExp.$1+'.png');
 				//sprite.mask = PIXI.Sprite.fromImage('../../img/pictures/ComaBattleAzelAttack.png');
 				this.loadBitmapComa();
-        this.visible = true;
+        		this.visible = true;
 				return;
 			}
 		}
@@ -671,107 +526,12 @@ Sprite_Picture.prototype.battleback1Name = function() {
         return '';
     }
 };
+
 	Sprite_Picture.prototype.loadBitmapComa = function() {
 		var picture = this.picture();
 		if (!picture) return;
 		var pictureName = picture.name();
-		if (pictureName.match(/ComaBattleEnemyProgramAttack(.+)Hue(\d+)Scale([\d\.]+)/)) {
-			var bitmap1 = ImageManager.loadPicture('Coma');
-			var bitmap2 = ImageManager.loadEnemy(RegExp.$1, Number(RegExp.$2));
-			var bitmap3 = ImageManager.loadBattleback2(this.battleback2Name());
-			var bitmap4 = ImageManager.loadBattleback1(this.battleback1Name());
-			var bitmap5 = ImageManager.loadPicture('ComaWaku');
-			var scale = Number(RegExp.$3);
-			let filter = new PIXI.filters.ColorMatrixFilter();
-			filter.hue(Number(RegExp.$2), false);
-			var self = this;
-			if (bitmap1.width == 0) {
-				bitmap1.addLoadListener(function() {
-					self.loadBitmapComa();
-				});
-				return;
-			} else if (bitmap2.width == 0) {
-				bitmap2.addLoadListener(function() {
-					self.loadBitmapComa();
-				});
-				return;
-			} else if (bitmap3.width == 0) {
-				bitmap3.addLoadListener(function() {
-					self.loadBitmapComa();
-				});
-				return;
-			} else if (bitmap4.width == 0) {
-				bitmap4.addLoadListener(function() {
-					self.loadBitmapComa();
-				});
-				return;
-			} else if (bitmap5.width == 0) {
-				bitmap5.addLoadListener(function() {
-					self.loadBitmapComa();
-				});
-				return;
-			}
-		//	bitmap
-/*
-			if (bitmap2) {
-				bitmap2.rotateHue(Number(RegExp.$2));
-			}
-*/
-			
-			const renderer = Graphics.app.renderer;
-	//		bitmap2.resize(bitmap2.width*scale, bitmap2.height*scale);
-			//const stage = new PIXI.Container();
-			const sprite = new PIXI.Sprite.from(bitmap2.canvas);
-			
-			
-
-			sprite.filters = [filter];/*
-			sprite.scale.x = scale;
-			sprite.scale.y = scale;*/
-			
-			const canvas = renderer.extract.canvas(sprite);// 二回目からちゃんとした色になる
-			//const texture = renderer.generateTexture(sprite);
-/*
-			canvas.width = canvas.width*scale;
-			canvas.height = canvas.height*scale;
-			
-*/
-			//this.hue();
-			//this.setHue(Number(RegExp.$2));
-			this.bitmap = new Bitmap(600, 175);
-			//this.bitmap = ImageManager.loadEnemy(RegExp.$1);
-			var w = canvas.width;
-			var h = canvas.height;
-			//var dx = 300-w/2;
-			var dx = 400-w/2*scale;
-			var dy = 175/2-h/3*scale;
-			var sx = 0;
-			var sy = 0;
-			if (dx < 0) {
-				sx = -dx;
-				dx = 0;
-			}
-			if (dy < 0) {
-				sy = -dy;
-				dy = 0;
-			}
-
-			if (dx < 160) {
-				dx = 160;
-			}
-			//ImageManager.loadPicture("ComaBattleAzelAttack");
-			//this.bitmap.maskedBlt(bitmap1,
-			//											bitmap2,
-			//											0,0,600,175,dx,dy);
-			this.bitmap.context.globalCompositeOperation = 'source-over';
-			this.bitmap.context.drawImage(bitmap1.canvas, 0, 0, 600, 175, 0, 0, 600, 175);
-			this.bitmap.context.globalCompositeOperation = 'source-atop';
-			this.bitmap.context.drawImage(bitmap4.canvas, 400*Math.random(), 175, 600, 175, 0, 0, 600, 175);
-			this.bitmap.context.drawImage(bitmap3.canvas, 400*Math.random(), 175, 600, 175, 0, 0, 600, 175);
-			this.bitmap.context.drawImage(bitmap5.canvas, 0, 0, 600, 175, 0, 0, 600, 175);
-			this.bitmap.context.drawImage(canvas, sx, sy, w, h, dx, dy, w*scale, h*scale);
-			//this.bitmap.context.drawImage(bitmap2.canvas, s);
-		}
+		// アクターのコマ
 		if (pictureName.match(/ComaBattleActorProgramAttack(.+)/)) {
 			var bitmap1 = ImageManager.loadPicture('Coma');
 			var bitmap2 = ImageManager.loadPicture(RegExp.$1);
@@ -800,8 +560,8 @@ Sprite_Picture.prototype.battleback1Name = function() {
 				});
 				return;
 			}
-			
-			this.bitmap = new Bitmap(600, 600);
+			//
+			this.bitmap = new Bitmap(450, 450);
 			//this.bitmap = ImageManager.loadEnemy(RegExp.$1);
 			var w = bitmap2.width;
 			var h = bitmap2.height;
@@ -822,23 +582,32 @@ Sprite_Picture.prototype.battleback1Name = function() {
 			if (dx < 160) {
 				dx = 160;
 			}
+			
 			//ImageManager.loadPicture("ComaBattleAzelAttack");
 			//this.bitmap.maskedBlt(bitmap1,
 			//											bitmap2,
 			//											0,0,600,175,dx,dy);
-			
+			// 参考：this.context.drawImage(image, sx, sy, sw, sh, dx, dy, dw, dh);
+			// 
+			// コマ背景
 			this.bitmap.context.globalCompositeOperation = 'source-over';
-			this.bitmap.context.drawImage(bitmap1.canvas, 0, 0, 600, 175, 12, 233, 600, 175);
+			this.bitmap.context.drawImage(bitmap1.canvas, 0, 0, 450, 132, 0, 173, 450, 132);
+			// 実験でコメントアウト
 			this.bitmap.context.globalCompositeOperation = 'source-atop';
-			this.bitmap.context.drawImage(bitmap4.canvas, 450*Math.random(), 175, 600, 175, 12, 233, 600, 175);
-			this.bitmap.context.drawImage(bitmap3.canvas, 400*Math.random(), 175, 600, 175, 12, 233, 600, 175);
+			// battlebacks背景。
+			this.bitmap.context.drawImage(bitmap4.canvas, 450*Math.random(),132, 450, 132, 12, 174, 450, 132);
+			this.bitmap.context.drawImage(bitmap3.canvas, 400*Math.random(),132, 450, 132, 12, 174, 450, 132);
 
 			this.bitmap.context.globalCompositeOperation = 'source-over';
 			//var imageData = bitmap2.rotateHue(Number(RegExp.$2));
-			this.bitmap.context.drawImage(bitmap2.canvas, 0, 0, 600, 600, 0, 0, 600, 600);
+			// アクターの画像
+			this.bitmap.context.drawImage(bitmap2.canvas, 0, 0, 450, 450, 0, 0, 450, 450);
+		
 			//this.bitmap.context.drawImage(bitmap2.canvas, s);
 		}
+
 	};	
-	
+
+
 
 })();
