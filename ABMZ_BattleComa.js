@@ -1,6 +1,6 @@
 ﻿// =============================================================================
 // ABMZ_BattleComa.js
-// Version: 0.05
+// Version: 0.06
 // -----------------------------------------------------------------------------
 // Copyright (c) 2019 ヱビ
 // Released under the MIT license
@@ -12,7 +12,7 @@
 
 
 /*:
- * @plugindesc v2.01 アクターのカットインを表示するようにします。
+ * @plugindesc v0.06 アクターのカットインを表示するようにします。
  * @author ヱビ
  * @target MZ
  *
@@ -50,15 +50,15 @@
  * バトルコマのファイルをimg/picturesのフォルダに入れてください。
  * 
  * キャラクターにつけるタグ：
- * <ComaName:キャラ名>
+ * <BCComaName:キャラ名>
  *
  * img/picturesには、
  * 
  * Coma.pngのほか、
  * 
- * ComaBattleキャラ名Attack.png
- * ComaBattleキャラ名Magic.png
- * ComaBattleキャラ名Damage.png
+ * CBキャラ名Attack.png
+ * CBキャラ名Magic.png
+ * CBキャラ名Damage.png
  * 
  * を用意してください
  * 
@@ -85,9 +85,16 @@
  * 
  * （1.00以降、機能停止中。コマの中ではなくピクチャで表示でいいかと思った。）
  * 
+ * 武器のメモ：
+ * <CBWeapon:Lance>
+ * 
+ * 
  * ============================================================================
  * 更新履歴
  * ============================================================================
+ * 
+ * Version 0.06
+ *   途中保存（武器合成用に改造中）
  * 
  * Version 2.00
  *   画像サイズを75%に変更。エネミーコマ削除
@@ -176,7 +183,7 @@
 	var AttackPictureNumber = Number(parameters['AttackPictureNumber']);
 	var DamagePictureNumber = Number(parameters['DamagePictureNumber']);
 	var ComaY = Number(parameters['ComaY']);
-//	ComaY += 87;
+
 	var ActorRight = eval(parameters['ActorRight']);
 	// Ver 1.1
 	const comaScale = 100;
@@ -197,56 +204,27 @@
 			const x = args.x === undefined ? 800 : eval(args.x);
 			const y = args.y === undefined ? 100 : eval(args.y);
 		/*
-			const comaName = actor.actor().meta["ComaName"];
+			const BCComaName = actor.actor().meta["BCComaName"];
 			const string = actor.comaNumberString();
-			if (!comaName) return;
+			if (!BCComaName) return;
 			this.commandActor = actor;
 			if (this.actionActor && actor.name() == this.actionActor.name()) {
 				return;
 			}
 			const x = 800;
 			const y = 100;*/
-			$gameScreen.showPicture(picId,"ComaBattleActorProgramAttack"+pictureName,  1, x, y, comaScale,comaScale, 255, 0);
+			$gameScreen.showPicture(picId,"CBProgram"+pictureName,  1, x, y, comaScale,comaScale, 255, 0);
 			var tone = $gameScreen.tone();
 			$gameScreen.tintPicture(picId, tone, 0);
     });
 //=============================================================================
 // Game_System
 //=============================================================================
-
+/*
 	var Game_Interpreter_pluginCommand = Game_Interpreter.prototype.pluginCommand;
 	Game_Interpreter.prototype.pluginCommand = function(command, args) {
 		Game_Interpreter_pluginCommand.call(this, command, args);
-		if (command === 'ShowEnemyComa') {
-			var v = $gameVariables._data;
-		//	console.log("showenemycoma : " + args[1]);
-			var picId = Number(args.picId);
-			var enemyName = args.pictureName;
-			for (var i=2,l=args.length; i<l; i++) {
-				if (isNaN(Number(args[i]))) {
-					enemyName += " " +args[i];
-				} else {
-					break;
-				}
-				
-			}
-			
-			var scale = Number(args[i]) || 1;
-			i++;
-			var hue = Number(args[i]) || 0;
-			i++;
-			var center = Number(args[i]) || 1;
-			if (Number(args[i]) === 0) center = 0;
-			i++;
-			var x = args[i] === undefined ? -50 : eval(args[i]);
-			i++;
-			var y = args[i] === undefined ? ComaY : eval(args[i]);
-			$gameScreen.showPicture(picId, "ComaBattleEnemyProgramAttack"+enemyName+"Hue"+hue+"Scale"+scale, center, x, y, comaScale,comaScale, 255, 0);
-			var tone = $gameScreen.tone();
-			$gameScreen.tintPicture(picId, tone, 0);
-			//if (hue != 0) $gameScreen.tintPicture(picId, hue, 1);
-		//	$gameScreen.showPicture(picId, "ComaBattleEnemyProgramAttack"+args[1], 0, -150, ComaY, comaScale,comaScale, 255, 0);
-		}
+		
 		if (command === 'ShowOtherFolderPicture') {
 			var v = $gameVariables._data;
 		//	console.log("showenemycoma : " + args[1]);
@@ -277,7 +255,7 @@
 		}
 	};
 	
-
+*/
 //=============================================================================
 // Game_Troop
 //=============================================================================
@@ -298,6 +276,13 @@ Game_Troop.prototype.setup = function(troopId) {
 		this._statusPanel = panel;
 	};
 
+
+
+	Game_Actor.prototype.getComaWeaponName = function() {
+		let comaWeapon = this.weapons()[0].meta.ComaWeapon;
+		if (comaWeapon && comaWeapon != "") return comaWeapon;
+		return "";
+	};
 
 Game_Actor.prototype.comaNumberString = function() {
 	var vId = 0;
@@ -335,9 +320,9 @@ Window_ActorCommand.prototype.setup = function(actor) {
 		 = Game_Actor.prototype.performActionStart;
 	Game_Actor.prototype.performActionStart = function(action) {
 		const actor = this;
-		const comaName = this.actor().meta["ComaName"];
+		const BCComaName = this.actor().meta["BCComaName"];
 		const string = this.comaNumberString();
-		if (comaName && action) {
+		if (BCComaName && action) {
 			if (ActorRight) {
 				var picId = DamagePictureNumber;
 				var x = 770;
@@ -381,26 +366,30 @@ Window_ActorCommand.prototype.setup = function(actor) {
 
 
 	Game_Screen.prototype.showActorBattleComaCommand = function(actor, motion) {
-		
-		const comaName = actor.actor().meta["ComaName"];
+		// 
+		if (!actor) return;
+		const BCComaName = actor.actor().meta["BCComaName"];
 		const string = actor.comaNumberString();
-		if (!comaName) return;
+		const comaWeaponName = actor.getComaWeaponName();
+		if (!BCComaName) return;
 		this.commandActor = actor;
 		if (this.actionActor && actor.name() == this.actionActor.name()) {
 			return;
 		}
 		const x = 800;
 		const y = 100;
-		$gameScreen.showPicture(10,"ComaBattleActorProgramAttack"+"ComaBattle"+comaName+ motion + string,  1, x, y, comaScale,comaScale, 255, 0);
+		$gameScreen.showPicture(10,"CBProgram"+"CB"+BCComaName + string + motion,  1, x, y, comaScale,comaScale, 255, 0);
+		
 		var tone = $gameScreen.tone();
 		$gameScreen.tintPicture(10, tone, 0);
 		
 	}
+/*
 	Game_Screen.prototype.showActorBattleComaAction = function(actor, motion) {
 		
-		const comaName = actor.actor().meta["ComaName"];
+		const BCComaName = actor.actor().meta["BCComaName"];
 		const string = actor.comaNumberString();
-		if (!comaName) return;
+		if (!BCComaName) return;
 		this.actionActor = actor;
 		if (this.commandActor && actor.name() == this.commandActor.name()) {
 			this.erasePicture(10);
@@ -413,19 +402,53 @@ Window_ActorCommand.prototype.setup = function(actor) {
 			var x = -150;
 		}
 	
-		this.showPicture(picId,"ComaBattleActorProgramAttack"+"ComaBattle"+comaName+motion + string, 1, x, ComaY, comaScale,comaScale, 255, 0);
+		this.showPicture(picId,"CBProgram"+"CB"+BCComaName+motion + string, 1, x, ComaY, comaScale,comaScale, 255, 0);
 		var tone = $gameScreen.tone();
 		this.tintPicture(picId, tone, 0);
 		
-	}
+	};*/
 	Game_Screen.prototype.showActorBattleComa = function(actor, motion) {
 		if (motion == "Command") {
 			this.showActorBattleComaCommand(actor, motion);
 			return;
 		}
-		this.showActorBattleComaAction(actor, motion);
+		this.showBCPicture(actor, motion);
 	};
 	
+	
+	Game_Screen.prototype.showBCPicture = function(actor, motion) {
+		
+		const BCComaName = actor.actor().meta["BCComaName"];
+		let string = actor.comaNumberString();
+		if (!BCComaName) return;
+		if (string == 0) {
+			string = "";
+		}
+		this.actionActor = actor;
+		if (this.commandActor && actor.name() == this.commandActor.name()) {
+			this.erasePicture(10);
+		}
+		// ハードコーディング
+		if (ActorRight) {
+			var picId = DamagePictureNumber;
+			var x = 770;
+		} else {
+			var picId = AttackPictureNumber;
+			var x = -150;
+		}
+	
+		// ハードコーディング
+		motion = "Command";
+		let weapon = "BCIceLance";
+		let shield = "BCBuckler";
+
+		this.showPicture(picId,("CBProgram" + "CB" + BCComaName + string + 
+			"_" +motion + "_" + weapon + "_" + shield), 	
+			1, x, ComaY, comaScale,comaScale, 255, 0);
+		var tone = $gameScreen.tone();
+		this.tintPicture(picId, tone, 0);
+		
+	}
 
 //=============================================================================
 // BattleManager
@@ -495,12 +518,11 @@ Game_Battler.prototype.performActionEnd = function() {
 		if (picture) {
 			var pictureName = picture.name();
 			if (this._pictureName !== pictureName && 
-				(pictureName.match(/ComaBattleEnemyProgramAttack(.+)/)||
-				 pictureName.match(/ComaBattleActorProgramAttack(.+)/)||
-				 pictureName.match(/AB_Enemy(.+)/))) {
+				 pictureName.match(/CBProgram(.+)/)||
+				 pictureName.match(/AB_Enemy(.+)/)) {
 				this._pictureName = pictureName;
 				//var sprite = PIXI.Sprite.fromImage('../../img/pictures/'+RegExp.$1+'.png');
-				//sprite.mask = PIXI.Sprite.fromImage('../../img/pictures/ComaBattleAzelAttack.png');
+				//sprite.mask = PIXI.Sprite.fromImage('../../img/pictures/CBAzelAttack.png');
 				this.loadBitmapComa();
         		this.visible = true;
 				return;
@@ -527,47 +549,97 @@ Sprite_Picture.prototype.battleback1Name = function() {
     }
 };
 
-	Sprite_Picture.prototype.loadBitmapComa = function() {
-		var picture = this.picture();
+	Sprite_Picture.prototype.loadBitmapComa = function(loadingNo) {
+		let picture = this.picture();
 		if (!picture) return;
-		var pictureName = picture.name();
-		// アクターのコマ
-		if (pictureName.match(/ComaBattleActorProgramAttack(.+)/)) {
-			var bitmap1 = ImageManager.loadPicture('Coma');
-			var bitmap2 = ImageManager.loadPicture(RegExp.$1);
-			var bitmap3 = ImageManager.loadBattleback2(this.battleback2Name());
-			var bitmap4 = ImageManager.loadBattleback1(this.battleback1Name());
-			var self = this;
+		let pictureName = picture.name();
 
-			if (bitmap1.width == 0) {
-				bitmap1.addLoadListener(function() {
-					self.loadBitmapComa();
-				});
-				return;
-			} else if (bitmap2.width == 0) {
-				bitmap2.addLoadListener(function() {
-					self.loadBitmapComa();
-				});
-				return;
-			} else if (bitmap3.width == 0) {
-				bitmap3.addLoadListener(function() {
-					self.loadBitmapComa();
-				});
-				return;
-			} else if (bitmap4.width == 0) {
-				bitmap4.addLoadListener(function() {
+		if (!loadingNo) {
+			loadingNo = 0;
+		}
+
+		// アクターのコマ（通常）
+		// アクター１_モーション_武器_盾
+		// 例：エイゼル_Command_BCIceLance_Buckler
+		if (pictureName.match(/CBProgram(.+)_(.+)_(.+)_(.+)/)) {
+			console.log("CBProgram");// ここは来てる
+			let actorBitmapName = RegExp.$1 + RegExp.$2;
+			let motion = RegExp.$2;
+			let weapon = RegExp.$3;
+			let shield = RegExp.$4;
+			let i;
+			console.log(actorBitmapName);//CBAzelCommand 来てる
+
+			bitmaps = [];
+			bitmaps[0] = ImageManager.loadPicture('Coma');
+			bitmaps[1]  = ImageManager.loadBattleback2(this.battleback2Name());
+			bitmaps[2]  = ImageManager.loadBattleback1(this.battleback1Name());
+			bitmaps[3]  = ImageManager.loadPicture(actorBitmapName);
+		//	bitmaps[0]  = ImageManager.loadPicture(actorBitmapName);
+			// ハードコーディング
+			bitmaps[4]  = ImageManager.loadPicture("CBIceLance");
+			bitmaps[5]  = ImageManager.loadPicture("CBBrownHandR");
+			bitmaps[6]  = ImageManager.loadPicture("CBBrownHandL");
+			
+			//let weaponPIXISp = PIXI.Sprite.from('../../img/picture/' + "CBIceLance" + ".png");
+			
+			let self = this;
+
+			//loadingNo = loadingNo + 1;
+/*			if (bitmaps[2].width == 0) {
+				bitmaps[2].addLoadListener(function() {
 					self.loadBitmapComa();
 				});
 				return;
 			}
+			if (bitmaps[3].width == 0) {
+				bitmaps[3].addLoadListener(function() {
+					self.loadBitmapComa();
+				});
+				return;
+			}
+*/
+			for (i = loadingNo; i < bitmaps.length; i ++) {
+				if (bitmaps[i].width == 0) {
+					bitmaps[i].addLoadListener(function() {
+						self.loadBitmapComa(i);
+					});
+					return;
+				}
+			}
+
+			// 左上から・右手
+			//let b5X = 60;
+			//let b5Y = 250;
+			// 240度角度これでOK
+			let b5R = 240 / 180 * Math.PI;
+			let b5W = bitmaps[4].width;
+			let b5H = bitmaps[4].height;
+			// 真ん中から
+			// 480:コマ画像サイズ
+			let b5X = 60 - 480 / 2 ;
+			let b5Y = 250 -  480 / 2;
+			let b6X = 60 - 50 / 2 ;
+			let b6Y = 250 -  50 / 2;
+
+			// うまくいかない。
 			//
-			this.bitmap = new Bitmap(450, 450);
+			//bitmap5.anchor.set(0.5);
+			//bitmap5.rotation = b5R;
+
+			/*
+			weaponPIXISp.anchor.set(0.5);
+			weaponPIXISp.rotation = b5R;
+*/
+			//
+			this.bitmap = new Bitmap(480, 480);
 			//this.bitmap = ImageManager.loadEnemy(RegExp.$1);
-			var w = bitmap2.width;
-			var h = bitmap2.height;
-			//var dx = 300-w/2;
-			var dx = 500-w;
-			var dy = 175/2-h/2;
+			// コマ、アクター、武器は幅・高さ480ピクセル
+			var w = 480;
+			var h = 480;
+			var dx = 300-w/2;
+			//var dx = 500-w/2;
+			var dy = 175-h/2;
 			var sx = 0;
 			var sy = 0;
 			if (dx < 0) {
@@ -582,8 +654,47 @@ Sprite_Picture.prototype.battleback1Name = function() {
 			if (dx < 160) {
 				dx = 160;
 			}
-			
-			//ImageManager.loadPicture("ComaBattleAzelAttack");
+
+			const renderer = Graphics.app.renderer;
+			let sprites = [];
+			let canvases = [];
+			let rotates = [0,0,0,0,240/180*Math.PI,320/180*Math.PI,320/180*Math.PI];
+			let wes = [];
+			let hes = [];
+			let xes = [0,0,0,0,60-480/2,60-50/2,150-50/2];
+			let yes = [0,0,0,0,280-480/2,280-50/2,230-50/2];
+
+			for (i = 0; i < bitmaps.length; i ++) {
+				sprites[i] = new PIXI.Sprite.from(bitmaps[i].canvas);
+				sprites[i].anchor.set(0.5);
+				sprites[i].rotation = rotates[i];
+				canvases[i] = renderer.extract.canvas(sprites[i]);
+			}
+			if (canvases[i] && canvases[i].width == 0) {
+				canvases[i].addLoadListener(function() {
+					self.loadBitmapComa(i);
+				});
+				return;
+			}
+			for (i = 4; i < bitmaps.length; i ++) {
+				wes[i] = bitmaps[i].width;
+				hes[i] = bitmaps[i].height;
+			}
+
+/*
+			const sprite = new PIXI.Sprite.from(bitmaps[4].canvas);
+			const sprite2 = new PIXI.Sprite.from(bitmaps[5].canvas);
+			sprite.anchor.set(0.5);
+			sprite.rotation = b5R;
+			sprite2.anchor.set(0.5);
+			sprite2.rotation = b5R;
+
+			const canvas = renderer.extract.canvas(sprite);
+			const canvas2 = renderer.extract.canvas(sprite2);
+*/			// GitHubにあげてある、最初のほうのレンダラーとスプライトとフィルター
+			// に使われている
+
+			//ImageManager.loadPicture("CBAzelAttack");
 			//this.bitmap.maskedBlt(bitmap1,
 			//											bitmap2,
 			//											0,0,600,175,dx,dy);
@@ -591,19 +702,25 @@ Sprite_Picture.prototype.battleback1Name = function() {
 			// 
 			// コマ背景
 			this.bitmap.context.globalCompositeOperation = 'source-over';
-			this.bitmap.context.drawImage(bitmap1.canvas, 0, 0, 450, 132, 0, 173, 450, 132);
+			this.bitmap.context.drawImage(bitmaps[0].canvas, 0, 0, 480, 480, 0, 0, 480, 480);
 			// 実験でコメントアウト
 			this.bitmap.context.globalCompositeOperation = 'source-atop';
 			// battlebacks背景。
-			this.bitmap.context.drawImage(bitmap4.canvas, 450*Math.random(),132, 450, 132, 12, 174, 450, 132);
-			this.bitmap.context.drawImage(bitmap3.canvas, 400*Math.random(),132, 450, 132, 12, 174, 450, 132);
+			this.bitmap.context.drawImage(bitmaps[1].canvas, 450*Math.random(),132, 480, 132, 0, 0, 480, 480);
+			this.bitmap.context.drawImage(bitmaps[2].canvas, 400*Math.random(),132, 480, 132, 0, 0, 480, 480);
 
 			this.bitmap.context.globalCompositeOperation = 'source-over';
 			//var imageData = bitmap2.rotateHue(Number(RegExp.$2));
+			//var imageData = bitmap5.
 			// アクターの画像
-			this.bitmap.context.drawImage(bitmap2.canvas, 0, 0, 450, 450, 0, 0, 450, 450);
-		
-			//this.bitmap.context.drawImage(bitmap2.canvas, s);
+			this.bitmap.context.drawImage(bitmaps[3].canvas, 0, 0, 480, 480, 0, 0, 480, 480);
+			// 武器の画像
+			for (i = 4; i < bitmaps.length; i ++) {
+				this.bitmap.context.drawImage(canvases[i], 0, 0, wes[i], hes[i], xes[i], yes[i], wes[i], hes[i]);
+			
+			}
+			
+			
 		}
 
 	};	
