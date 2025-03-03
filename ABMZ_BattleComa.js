@@ -1,6 +1,6 @@
 ﻿// =============================================================================
 // ABMZ_BattleComa.js
-// Version: 0.06
+// Version: 0.07
 // -----------------------------------------------------------------------------
 // Copyright (c) 2019 ヱビ
 // Released under the MIT license
@@ -12,7 +12,7 @@
 
 
 /*:
- * @plugindesc v0.06 アクターのカットインを表示するようにします。
+ * @plugindesc v0.07 アクターのカットインを表示するようにします。
  * @author ヱビ
  * @target MZ
  *
@@ -56,9 +56,9 @@
  * 
  * Coma.pngのほか、
  * 
- * CBキャラ名Attack.png
- * CBキャラ名Magic.png
- * CBキャラ名Damage.png
+ * BCキャラ名Attack.png
+ * BCキャラ名Magic.png
+ * BCキャラ名Damage.png
  * 
  * を用意してください
  * 
@@ -86,15 +86,15 @@
  * （1.00以降、機能停止中。コマの中ではなくピクチャで表示でいいかと思った。）
  * 
  * 武器のメモ：
- * <CBWeapon:Lance>
+ * <BCWeapon:Lance>
  * 
  * 
  * ============================================================================
  * 更新履歴
  * ============================================================================
  * 
- * Version 0.06
- *   途中保存（武器合成用に改造中）
+ * Version 0.07
+ *   作成途中。武器画像などを読み込む準備
  * 
  * Version 2.00
  *   画像サイズを75%に変更。エネミーコマ削除
@@ -213,7 +213,7 @@
 			}
 			const x = 800;
 			const y = 100;*/
-			$gameScreen.showPicture(picId,"CBProgram"+pictureName,  1, x, y, comaScale,comaScale, 255, 0);
+			$gameScreen.showPicture(picId,"BCProgram"+pictureName,  1, x, y, comaScale,comaScale, 255, 0);
 			var tone = $gameScreen.tone();
 			$gameScreen.tintPicture(picId, tone, 0);
     });
@@ -378,7 +378,7 @@ Window_ActorCommand.prototype.setup = function(actor) {
 		}
 		const x = 800;
 		const y = 100;
-		$gameScreen.showPicture(10,"CBProgram"+"CB"+BCComaName + string + motion,  1, x, y, comaScale,comaScale, 255, 0);
+		$gameScreen.showPicture(10,"BCProgram"+"BC"+BCComaName + string + motion,  1, x, y, comaScale,comaScale, 255, 0);
 		
 		var tone = $gameScreen.tone();
 		$gameScreen.tintPicture(10, tone, 0);
@@ -402,7 +402,7 @@ Window_ActorCommand.prototype.setup = function(actor) {
 			var x = -150;
 		}
 	
-		this.showPicture(picId,"CBProgram"+"CB"+BCComaName+motion + string, 1, x, ComaY, comaScale,comaScale, 255, 0);
+		this.showPicture(picId,"BCProgram"+"BC"+BCComaName+motion + string, 1, x, ComaY, comaScale,comaScale, 255, 0);
 		var tone = $gameScreen.tone();
 		this.tintPicture(picId, tone, 0);
 		
@@ -440,9 +440,9 @@ Window_ActorCommand.prototype.setup = function(actor) {
 		// ハードコーディング
 		motion = "Command";
 		let weapon = "BCIceLance";
-		let shield = "BCBuckler";
+		let shield = "BBCuckler";
 
-		this.showPicture(picId,("CBProgram" + "CB" + BCComaName + string + 
+		this.showPicture(picId,("BCProgram" + "BC" + BCComaName + string + 
 			"_" +motion + "_" + weapon + "_" + shield), 	
 			1, x, ComaY, comaScale,comaScale, 255, 0);
 		var tone = $gameScreen.tone();
@@ -518,11 +518,11 @@ Game_Battler.prototype.performActionEnd = function() {
 		if (picture) {
 			var pictureName = picture.name();
 			if (this._pictureName !== pictureName && 
-				 pictureName.match(/CBProgram(.+)/)||
+				 pictureName.match(/BCProgram(.+)/)||
 				 pictureName.match(/AB_Enemy(.+)/)) {
 				this._pictureName = pictureName;
 				//var sprite = PIXI.Sprite.fromImage('../../img/pictures/'+RegExp.$1+'.png');
-				//sprite.mask = PIXI.Sprite.fromImage('../../img/pictures/CBAzelAttack.png');
+				//sprite.mask = PIXI.Sprite.fromImage('../../img/pictures/BCAzelAttack.png');
 				this.loadBitmapComa();
         		this.visible = true;
 				return;
@@ -561,44 +561,49 @@ Sprite_Picture.prototype.battleback1Name = function() {
 		// アクターのコマ（通常）
 		// アクター１_モーション_武器_盾
 		// 例：エイゼル_Command_BCIceLance_Buckler
-		if (pictureName.match(/CBProgram(.+)_(.+)_(.+)_(.+)/)) {
-			console.log("CBProgram");// ここは来てる
+		if (pictureName.match(/BCProgram(.+)_(.+)_(.+)_(.+)/)) {
+			console.log("BCProgram");// ここは来てる
 			let actorBitmapName = RegExp.$1 + RegExp.$2;
 			let motion = RegExp.$2;
 			let weapon = RegExp.$3;
 			let shield = RegExp.$4;
 			let i;
-			console.log(actorBitmapName);//CBAzelCommand 来てる
+			console.log(actorBitmapName);//BCAzelCommand 来てる
+			const CanvasWidth = 480;
+			const CanvasHeight = 480;
+			const renderer = Graphics.app.renderer;
+			const sprites = [];
+			const canvases = [];
+			const rotates = [0,0,0,0,240,320,320];
+			const wes = [480,1000,1000,480,400,100,100];
+			const hes = [480,740,740,480,400,100,100];
+			const dxes = [0,0,0,0,60,60,150];
+			const dyes = [0,0,0,0,250,250,250];
+			const fileNames = ["","","","BCBase","BCWIceLance","BCBrownHandR","BCBrownHandL"];
+			const frameXes = [0,0,0,0,0,0,0];
+			const frameYes = [0,0,0,0,0,0,0];
+			const sxes = [];
+			const syes = [];
+
+			this.bitmap = new Bitmap(480, 480);
 
 			bitmaps = [];
 			bitmaps[0] = ImageManager.loadPicture('Coma');
 			bitmaps[1]  = ImageManager.loadBattleback2(this.battleback2Name());
 			bitmaps[2]  = ImageManager.loadBattleback1(this.battleback1Name());
-			bitmaps[3]  = ImageManager.loadPicture(actorBitmapName);
+			bitmaps[3]  = ImageManager.loadPicture("BCBase");
 		//	bitmaps[0]  = ImageManager.loadPicture(actorBitmapName);
 			// ハードコーディング
-			bitmaps[4]  = ImageManager.loadPicture("CBIceLance");
-			bitmaps[5]  = ImageManager.loadPicture("CBBrownHandR");
-			bitmaps[6]  = ImageManager.loadPicture("CBBrownHandL");
+			bitmaps[4]  = ImageManager.loadPicture("BCWIceLance");
+			bitmaps[5]  = ImageManager.loadPicture("BCBrownHandR");
+			bitmaps[6]  = ImageManager.loadPicture("BCBrownHandL");
 			
-			//let weaponPIXISp = PIXI.Sprite.from('../../img/picture/' + "CBIceLance" + ".png");
+			//let weaponPIXISp = PIXI.Sprite.from('../../img/picture/' + "BCIceLance" + ".png");
 			
 			let self = this;
 
-			//loadingNo = loadingNo + 1;
-/*			if (bitmaps[2].width == 0) {
-				bitmaps[2].addLoadListener(function() {
-					self.loadBitmapComa();
-				});
-				return;
-			}
-			if (bitmaps[3].width == 0) {
-				bitmaps[3].addLoadListener(function() {
-					self.loadBitmapComa();
-				});
-				return;
-			}
-*/
+
+			// ピクチャがロード中だと、もう一度読んで関数終了する
 			for (i = loadingNo; i < bitmaps.length; i ++) {
 				if (bitmaps[i].width == 0) {
 					bitmaps[i].addLoadListener(function() {
@@ -608,119 +613,55 @@ Sprite_Picture.prototype.battleback1Name = function() {
 				}
 			}
 
-			// 左上から・右手
-			//let b5X = 60;
-			//let b5Y = 250;
-			// 240度角度これでOK
-			let b5R = 240 / 180 * Math.PI;
-			let b5W = bitmaps[4].width;
-			let b5H = bitmaps[4].height;
-			// 真ん中から
-			// 480:コマ画像サイズ
-			let b5X = 60 - 480 / 2 ;
-			let b5Y = 250 -  480 / 2;
-			let b6X = 60 - 50 / 2 ;
-			let b6Y = 250 -  50 / 2;
+			// ロード完了後
 
-			// うまくいかない。
-			//
-			//bitmap5.anchor.set(0.5);
-			//bitmap5.rotation = b5R;
-
-			/*
-			weaponPIXISp.anchor.set(0.5);
-			weaponPIXISp.rotation = b5R;
-*/
-			//
-			this.bitmap = new Bitmap(480, 480);
-			//this.bitmap = ImageManager.loadEnemy(RegExp.$1);
-			// コマ、アクター、武器は幅・高さ480ピクセル
-			var w = 480;
-			var h = 480;
-			var dx = 300-w/2;
-			//var dx = 500-w/2;
-			var dy = 175-h/2;
-			var sx = 0;
-			var sy = 0;
-			if (dx < 0) {
-				sx = -dx;
-				dx = 0;
-			}
-			if (dy < 0) {
-				sy = -dy;
-				dy = 0;
-			}
-
-			if (dx < 160) {
-				dx = 160;
-			}
-
-			const renderer = Graphics.app.renderer;
-			let sprites = [];
-			let canvases = [];
-			let rotates = [0,0,0,0,240/180*Math.PI,320/180*Math.PI,320/180*Math.PI];
-			let wes = [];
-			let hes = [];
-			let xes = [0,0,0,0,60-480/2,60-50/2,150-50/2];
-			let yes = [0,0,0,0,280-480/2,280-50/2,230-50/2];
-
-			for (i = 0; i < bitmaps.length; i ++) {
-				sprites[i] = new PIXI.Sprite.from(bitmaps[i].canvas);
-				sprites[i].anchor.set(0.5);
-				sprites[i].rotation = rotates[i];
-				canvases[i] = renderer.extract.canvas(sprites[i]);
-			}
-			if (canvases[i] && canvases[i].width == 0) {
-				canvases[i].addLoadListener(function() {
-					self.loadBitmapComa(i);
-				});
-				return;
-			}
-			for (i = 4; i < bitmaps.length; i ++) {
-				wes[i] = bitmaps[i].width;
-				hes[i] = bitmaps[i].height;
-			}
-
-/*
-			const sprite = new PIXI.Sprite.from(bitmaps[4].canvas);
-			const sprite2 = new PIXI.Sprite.from(bitmaps[5].canvas);
-			sprite.anchor.set(0.5);
-			sprite.rotation = b5R;
-			sprite2.anchor.set(0.5);
-			sprite2.rotation = b5R;
-
-			const canvas = renderer.extract.canvas(sprite);
-			const canvas2 = renderer.extract.canvas(sprite2);
-*/			// GitHubにあげてある、最初のほうのレンダラーとスプライトとフィルター
-			// に使われている
-
-			//ImageManager.loadPicture("CBAzelAttack");
-			//this.bitmap.maskedBlt(bitmap1,
-			//											bitmap2,
-			//											0,0,600,175,dx,dy);
-			// 参考：this.context.drawImage(image, sx, sy, sw, sh, dx, dy, dw, dh);
-			// 
 			// コマ背景
 			this.bitmap.context.globalCompositeOperation = 'source-over';
 			this.bitmap.context.drawImage(bitmaps[0].canvas, 0, 0, 480, 480, 0, 0, 480, 480);
-			// 実験でコメントアウト
+			// source-atop：透明のところは塗らない
 			this.bitmap.context.globalCompositeOperation = 'source-atop';
-			// battlebacks背景。
+			// battlebacks背景
 			this.bitmap.context.drawImage(bitmaps[1].canvas, 450*Math.random(),132, 480, 132, 0, 0, 480, 480);
 			this.bitmap.context.drawImage(bitmaps[2].canvas, 400*Math.random(),132, 480, 132, 0, 0, 480, 480);
 
 			this.bitmap.context.globalCompositeOperation = 'source-over';
-			//var imageData = bitmap2.rotateHue(Number(RegExp.$2));
-			//var imageData = bitmap5.
-			// アクターの画像
-			this.bitmap.context.drawImage(bitmaps[3].canvas, 0, 0, 480, 480, 0, 0, 480, 480);
-			// 武器の画像
-			for (i = 4; i < bitmaps.length; i ++) {
-				this.bitmap.context.drawImage(canvases[i], 0, 0, wes[i], hes[i], xes[i], yes[i], wes[i], hes[i]);
+			this.bitmap.context.drawImage(bitmaps[3].canvas, 0,0, 480, 480, 0, 0, 480, 480);
+
+			//this.bitmap = ImageManager.loadEnemy(RegExp.$1);
+			// コマ、アクターは幅・高さ480ピクセル、武器・盾は400*x*y
+			// 
+			for (i = 3; i < bitmaps.length; i ++) {
+				if (wes[i] == "" || wes[i] == 0) {
+					wes[i] = bitmaps[i].width;
+					hes[i] = bitmaps[i].height;
+				}
+				if (frameXes[i] == 0) {
+					frameXes[i] = 0;
+				}
+				if (frameYes[i] == 0) {
+					frameYes[i] = 0;
+				}
+				let w = wes[i]; let h = hes[i];
+				let dx = dxes[i] - w / 2;
+				let dy = dyes[i] - h / 2;
+				let sx = frameXes[i] * w;
+				let sy = frameYes[i] * h;
+				let rotate = rotates[i] * Math.PI / 180;
+				let bitmap2 = new Bitmap(w, h);
+				bitmap2.context.drawImage(bitmaps[i].canvas, 
+					sx, sy, w, h, 0, 0, w, h);
+				sprites[i] = new PIXI.Sprite.from(bitmap2.canvas);
+
+				sprites[i].anchor.set(0.5);
+				sprites[i].rotation = rotates[i];
+				
+				canvases[i] = renderer.extract.canvas(sprites[i]);
+		//	this.bitmap.context.drawImage(bitmaps[3].canvas, 0, 0, 480, 480, 0, 0, 480, 480);
+			// 3~最大まで：
+				this.bitmap.context.drawImage(canvases[i], 0, 0, w, h, dx, dy, w, h);
+				
 			
 			}
-			
-			
 		}
 
 	};	
