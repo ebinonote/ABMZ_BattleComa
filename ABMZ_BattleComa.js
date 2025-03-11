@@ -1,6 +1,6 @@
 ﻿// =============================================================================
 // ABMZ_BattleComa.js
-// Version: 0.08
+// Version: 0.09
 // -----------------------------------------------------------------------------
 // Copyright (c) 2025 ヱビ
 // Released under the MIT license
@@ -12,7 +12,7 @@
 
 
 /*:
- * @plugindesc v0.08 アクターのカットインを表示するようにします。
+ * @plugindesc v0.09 アクターのカットインを表示するようにします。
  * @author ヱビ
  * @target MZ
  *
@@ -103,6 +103,9 @@
  * ============================================================================
  * 更新履歴
  * ============================================================================
+ * 
+ * Version 0.09
+ *   作成途中。武器画像などを読み込む準備
  * 
  * Version 0.08
  *   作成途中。武器画像などを読み込む準備
@@ -201,6 +204,12 @@
 	// Ver 1.1
 	const comaScale = 100;
 	
+	const Motion = {
+		COMMAND:0,
+		ATTACK:1,
+		MAGIC:2,
+		GUARD:3
+	}
 
 //=============================================================================
 // PluginManager
@@ -247,20 +256,20 @@ Game_Troop.prototype.setup = function(troopId) {
 		return "";
 	};
 
-Game_Actor.prototype.comaNumberString = function() {
+Game_Actor.prototype.comaNumber = function() {
 	var vId = 0;
 	switch (this.name()) {
 	case "ルーク": vId = 72; break;
 	case "ダイアナ": vId = 29; break;
 	//case "エイゼル": vId = 74; break;
-	default: return "";
+	default: return 0;
 	}
 	//if (!$gameSwitches.value(vId)) return "2";
-	if (this.name() == "ルーク" && this.isStateAffected(73)) return "3";
+	if (this.name() == "ルーク" && this.isStateAffected(73)) return 3;
 	// スイッチ29番はダイアナ変装。ONのとき、王国兵士姿になる。
-	if (this.name() == "ダイアナ" && $gameSwitches.value(29)) return "2";
+	if (this.name() == "ダイアナ" && $gameSwitches.value(29)) return 2;
 	
-	return "";
+	return 0;
 };
 
 
@@ -269,7 +278,7 @@ var _Window_ActorCommand_prototype_setup = Window_ActorCommand.prototype.setup;
 Window_ActorCommand.prototype.setup = function(actor) {
 		_Window_ActorCommand_prototype_setup.call(this, actor);
 		if (!this._actor) return;
-		$gameScreen.showBCPicture(actor, 0);
+		$gameScreen.showBCPicture(actor, Motion.COMMAND);
 };
 
 	var _Scene_Battle_prototype_endCommandSelection = Scene_Battle.prototype.endCommandSelection;
@@ -284,7 +293,7 @@ Window_ActorCommand.prototype.setup = function(actor) {
 	Game_Actor.prototype.performActionStart = function(action) {
 		const actor = this;
 		const BCComaName = this.actor().meta["BCComaName"];
-		const string = this.comaNumberString();
+		//const string = this.comaNumberString();
 		if (BCComaName && action) {
 /*			if (ActorRight) {
 				var picId = CommandPictureNumber;
@@ -294,13 +303,13 @@ Window_ActorCommand.prototype.setup = function(actor) {
 				var x = -50;
 			}
 */			if (action.isAttack()) {
-				$gameScreen.showBCPicture(actor, 1);
+				$gameScreen.showBCPicture(actor, Motion.ATTACK);
 			} else if (action.isMagicSkill()) {
-				$gameScreen.showBCPicture(actor, 2);
+				$gameScreen.showBCPicture(actor, Motion.MAGIC);
 			} else if (action.isSkill()) {
-				$gameScreen.showBCPicture(actor, 1);
+				$gameScreen.showBCPicture(actor, Motion.ATTACK);
 			} else {
-				$gameScreen.showBCPicture(actor, 1);
+				$gameScreen.showBCPicture(actor, Motion.ATTACK);
 			}
 		}
 		_Game_Actor_prototype_performActionStart.call(this, action);
@@ -399,33 +408,64 @@ Game_Battler.prototype.performActionEnd = function() {
 	Game_Actor.prototype.performDamage = function(action) {
 		_Game_Actor_prototype_performDamage.call(this, action);
 		// frameX... 0:Command, 1:Attack, 2:Magic, 3:Guard
-		$gameScreen.showBCPicture(this, 3);
+		$gameScreen.showBCPicture(this, Motion.GUARD);
 		
 	};
 	var _Game_Actor_prototype_performMiss = Game_Actor.prototype.performMiss;
 	Game_Actor.prototype.performMiss = function() {
 		_Game_Actor_prototype_performMiss.call(this);
 		// frameX... 0:Command, 1:Attack, 2:Magic, 3:Guard
-		$gameScreen.showBCPicture(this, 1);
+		$gameScreen.showBCPicture(this, Motion.ATTACK);
 	};
 	var _Game_Actor_prototype_performEvasion = Game_Actor.prototype.performEvasion;
 	Game_Actor.prototype.performEvasion = function() {
 		_Game_Actor_prototype_performEvasion.call(this);
 		// frameX... 0:Command, 1:Attack, 2:Magic, 3:Guard
-		$gameScreen.showBCPicture(this, 1);
+		$gameScreen.showBCPicture(this, Motion.ATTACK);
 	};
 	var _Game_Actor_prototype_performMagicEvasion = Game_Actor.prototype.performMagicEvasion;
 	Game_Actor.prototype.performMagicEvasion = function() {
 		_Game_Actor_prototype_performMagicEvasion.call(this);
 		// frameX... 0:Command, 1:Attack, 2:Magic, 3:Guard
-		$gameScreen.showBCPicture(this, 1);
+		$gameScreen.showBCPicture(this, Motion.ATTACK);
 	};
 
 
 
 	Game_Actor.prototype.loadBCActorImageFileName = function() {
 		return "BCBase";
+		if (this.name() == "ルーク") return "BCLuke";
+		if (this.name() == "エイゼル") return "BCAzel";
+		if (this.name() == "ダイアナ") return "BCDiana";
+		return "BCBase";
 	}
+
+	Game_Actor.prototype.loadBCActorImageHandR = function() {
+		if (this.name() == "ルーク") return "BCBrownHandR";
+		if (this.name() == "エイゼル") return "BCHand1R";
+		if (this.name() == "ダイアナ") return "BCPinkHandR";
+		return "BCBrownHandR";
+	}
+
+	Game_Actor.prototype.loadBCActorImageHandL = function() {
+		if (this.name() == "ルーク") return "BCBrownHandL";
+		if (this.name() == "エイゼル") return "BCHand1L";
+		if (this.name() == "ダイアナ") return "BCPinkHandL";
+		return "BCBrownHandL";
+	}
+	Game_Actor.prototype.loadBCActorImageWeapon = function() {
+		if (this.name() == "ルーク") return "BCWIceLance";
+		if (this.name() == "エイゼル") return "BCWWand";
+		if (this.name() == "ダイアナ") return "BCIceLance";
+		return "BCWWand";
+	}
+	Game_Actor.prototype.loadBCActorImageBuckler = function() {
+		if (this.name() == "ルーク") return "BCBuckler";
+		if (this.name() == "エイゼル") return "BCBuckler";
+		if (this.name() == "ダイアナ") return "BCBuckler";
+		return "BCBuckler";
+	}
+
 
 	
 /*
@@ -439,33 +479,72 @@ Game_Battler.prototype.performActionEnd = function() {
 
 	}
 */
-	Game_Actor.prototype.loadBCMotionsAndImage = function() {
-		let BCItems = {};
-		BCItems["Actor"] = [
-			{id:"Actor",frameX:0,x:0,y:0,z:200,rotate:240,image:"BCAzel",w:480,h:480}
-			,{id:"Actor",frameX:1,x:0,y:0,z:200,rotate:240,image:"BCAzel",w:480,h:480}
-			,{id:"Actor",frameX:2,x:0,y:0,z:200,rotate:240,image:"BCAzel",w:480,h:480}
-			,{id:"Actor",frameX:3,x:0,y:0,z:200,rotate:240,image:"BCAzel",w:480,h:480}
+
+	Game_Actor.prototype.getMotionName = function () {
+		return "Azel";
+		if (this.name() == "エイゼル"){
+			return "Azel";
+		}
+		if (this.name() == "ルーク"){
+			return "Luke";
+		}
+		if (this.name() == "ダイアナ"){
+			return "Diana";
+		}
+		if (this.name() == "アイリーン"){
+			return "Ireen";
+		}
+		
+	}
+// ==========================================================
+// BCMotions
+// ==========================================================
+
+		let BCMotions = [];
+		BCMotions["Azel"] = [];
+		BCMotions["Azel"][Motion.COMMAND] = [
+			{id:"Actor",x:0,y:0,z:200,rotate:0,frameX:0},
+			{id:"Weapon",x:30,y:300,z:300,rotate:340,frameX:0},
+			{id:"HandR",x:30,y:300,z:400,rotate:340,frameX:0},
+			{id:"HandL",x:0,y:0,z:0,rotate:0,frameX:0}
 		];
-		BCItems["Weapon"] = [
-			{id:"Weapon",frameX:0,x:60,y:280,z:300,rotate:240,image:"BCWIceLance",w:480,h:480}
-			,{id:"Weapon",frameX:0,x:60,y:280,z:300,rotate:240,image:"BCWIceLance",w:480,h:480}
-			,{id:"Weapon",frameX:0,x:60,y:280,z:300,rotate:240,image:"BCWIceLance",w:480,h:480}
-			,{id:"Weapon",frameX:0,x:60,y:280,z:300,rotate:240,image:"BCWIceLance",w:480,h:480}
+		BCMotions["Azel"][Motion.ATTACK] = [
+			{id:"Actor",x:0,y:0,z:200,rotate:0,frameX:1},
+			{id:"Weapon",x:340,y:270,z:300,rotate:20,frameX:0},
+			{id:"HandR",x:340,y:270,z:400,rotate:20,frameX:0},
+			{id:"HandL",x:0,y:0,z:0,rotate:0,frameX:0}
 		];
-		BCItems["HandR"] = [
-			{id:"HandR",frameX:0,x:60,y:280,z:10,rotate:240,image:"BCBrownHandR",w:480,h:480}
-			,{id:"HandR",frameX:0,x:60,y:280,z:10,rotate:240,image:"BCBrownHandR",w:480,h:480}
-			,{id:"HandR",frameX:0,x:60,y:280,z:10,rotate:240,image:"BCBrownHandR",w:480,h:480}
-			,{id:"HandR",frameX:0,x:60,y:280,z:10,rotate:240,image:"BCBrownHandR",w:480,h:480}
+		BCMotions["Azel"][Motion.MAGIC] = [
+			{id:"Actor",x:0,y:0,z:200,rotate:0,frameX:2},
+			{id:"Weapon",x:40,y:250,z:300,rotate:310,frameX:0},
+			{id:"HandR",x:40,y:250,z:400,rotate:310,frameX:0},
+			{id:"HandL",x:0,y:0,z:500,rotate:0,frameX:0}
+		]
+		BCMotions["Azel"][Motion.GUARD] = [
+			{id:"Actor",x:0,y:0,z:200,rotate:0,frameX:3},
+			{id:"Weapon",x:30,y:270,z:300,rotate:40,frameX:0},
+			{id:"HandR",x:30,y:270,z:400,rotate:40,frameX:0},
+			{id:"HandL",x:60,y:110,z:500,rotate:40,frameX:0}
 		];
-		BCItems["HandL"] = [
-			{id:"HandL",frameX:0,x:60,y:280,z:10,rotate:240,image:"BCBrownHandL",w:480,h:480}
-			,{id:"HandL",frameX:0,x:60,y:280,z:10,rotate:240,image:"BCBrownHandL",w:480,h:480}
-			,{id:"HandL",frameX:0,x:60,y:280,z:10,rotate:240,image:"BCBrownHandL",w:480,h:480}
-			,{id:"HandL",frameX:0,x:60,y:280,z:10,rotate:240,image:"BCBrownHandL",w:480,h:480}
-		];
-		return BCItems;
+
+// ======================================================
+	Game_Actor.prototype.loadBCMotionsAndImage = function(motion) {
+		this.motionName = this.getMotionName();
+		this.BCImages = {};
+		const ActorFileName = this.loadBCActorImageFileName();
+		const HandRFileName = this.loadBCActorImageHandR();
+		const HandLFileName = this.loadBCActorImageHandL();
+		const WeaponFileName = this.loadBCActorImageWeapon();
+		const BucklerFileName = this.loadBCActorImageBuckler();
+		this.BCImages.fileNames = {
+			Actor:{width:480, height:480, fileName:ActorFileName},
+			Weapon:{width:480, height:480, fileName:WeaponFileName},
+			Buckler:{width:400, height:400, fileName:BucklerFileName},
+			HandR:{width:100, height:100, fileName:HandRFileName},
+			HandL:{width:100, height:100, fileName:HandLFileName},
+		};
+	//	return BCMotions;
+		this.BCMotions = BCMotions[this.motionName][motion];
 	}
 //=============================================================================
 // Sprite_Picture
@@ -525,7 +604,9 @@ Sprite_Picture.prototype.battleback1Name = function() {
 			let actor = $gameActors.actor(actorId);
 			if (!actor) return;
 			//console.log(actorBitmapName);//undefined 来てる
-			const obj = $gameActors.actor(actorId).loadBCMotionsAndImage();
+			actor.loadBCMotionsAndImage(motion);
+			const obj = actor.BCMotions;
+/*
 			obj[motion] = {};
 			obj[motion].CanvasWidth = 480;
 			obj[motion].CanvasHeight = 480;
@@ -539,23 +620,29 @@ Sprite_Picture.prototype.battleback1Name = function() {
 			obj[motion].frameYes = [0,0,0,0,0,0,0];
 			obj[motion].sxes = [];
 			obj[motion].syes = [];
-
+*/
 			const renderer = Graphics.app.renderer;
 			const sprites = [];
 			let canvases = [];
 
 			this.bitmap = new Bitmap(480, 480);
+			const ActorFileName = actor.loadBCActorImageFileName();
+			const HandRFileName = actor.loadBCActorImageHandR();
+			const HandLFileName = actor.loadBCActorImageHandL();
+			const WeaponFileName = actor.loadBCActorImageWeapon();
+			const BucklerFileName = actor.loadBCActorImageBuckler();
 
 			bitmaps = [];
 			bitmaps[0] = ImageManager.loadPicture('Coma');
 			bitmaps[1]  = ImageManager.loadBattleback2(this.battleback2Name());
 			bitmaps[2]  = ImageManager.loadBattleback1(this.battleback1Name());
-			bitmaps[3]  = ImageManager.loadPicture("BCBase");
+			bitmaps[3]  = ImageManager.loadPicture(ActorFileName);
 		//	bitmaps[0]  = ImageManager.loadPicture(actorBitmapName);
 			// ハードコーディング
-			bitmaps[4]  = ImageManager.loadPicture("BCWIceLance");
-			bitmaps[5]  = ImageManager.loadPicture("BCBrownHandR");
-			bitmaps[6]  = ImageManager.loadPicture("BCBrownHandL");
+			bitmaps[4]  = ImageManager.loadPicture(WeaponFileName);
+			bitmaps[5]  = ImageManager.loadPicture(HandRFileName);
+			bitmaps[6]  = ImageManager.loadPicture(HandLFileName);
+			bitmaps[7]  = ImageManager.loadPicture(BucklerFileName);
 			
 			//let weaponPIXISp = PIXI.Sprite.from('../../img/picture/' + "BCIceLance" + ".png");
 			
@@ -583,26 +670,23 @@ Sprite_Picture.prototype.battleback1Name = function() {
 			this.bitmap.context.drawImage(bitmaps[2].canvas, 400*Math.random(),132, 480, 132, 0, 0, 480, 480);
 
 			this.bitmap.context.globalCompositeOperation = 'source-over';
-			this.bitmap.context.drawImage(bitmaps[3].canvas, 0,0, 480, 480, 0, 0, 480, 480);
+	//		this.bitmap.context.drawImage(bitmaps[3].canvas, 0,0, 480, 480, 0, 0, 480, 480);
 
 			//this.bitmap = ImageManager.loadEnemy(RegExp.$1);
 			// コマ、アクターは幅・高さ480ピクセル、武器・盾は400*x*y
 			// 
-			for (i = 4; i < bitmaps.length; i ++) {
+			for (i = 0; i < obj.length; i ++) {
 				console.log("bitmaps[" + i + "]");//　呼ばれてる（4,5,6）
-				if (obj[motion].frameXes[i] == 0) {
-					obj[motion].frameXes[i] = 0;
-				}
-				if (obj[motion].frameYes[i] == 0) {
-					obj[motion].frameYes[i] = 0;
-				}
-				const w = obj[motion].wes[i]; const h = obj[motion].hes[i];
-				const dx = obj[motion].dxes[i] - w / 2;
-				const dy = obj[motion].dyes[i] - h / 2;
-				const sx = obj[motion].frameXes[i] * w;
-				const sy = obj[motion].frameYes[i] * h;
-				const rotate = obj[motion].rotates[i] * Math.PI / 180;
-				const bitmap2 = new Bitmap(w, h);
+				const motionObj = obj[i];
+				const w = motionObj.width; const h = motionObj.height;
+				const dx = motionObj.x - w / 2;
+				const dy = motionObj.y - h / 2;
+				const sx = motionObj.frameX * w;
+				//const sy = motionObj.frameYes[i] * h;
+				//const sy = actor.comaNumber();// 仮
+				const sy = 0; //仮
+				const rotate = motionObj.rotate * Math.PI / 180;
+				let bitmap2 = new Bitmap(w, h);
 				bitmap2.context.drawImage(bitmaps[i].canvas, 
 					sx, sy, w, h, 0, 0, w, h);
 				sprites[i] = new PIXI.Sprite.from(bitmap2.canvas);
